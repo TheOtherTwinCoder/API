@@ -1,8 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.responses import FileResponse
 from playwright.async_api import async_playwright  #  Fixed import
 
 app = FastAPI()
+@app.get("/favicon.ico")
+async def favicon():
+    return Response(status_code = 204)
 
 @app.get("/{my_path}")
 async def screenshot(my_path: str):
