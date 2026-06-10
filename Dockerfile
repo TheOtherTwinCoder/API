@@ -1,6 +1,5 @@
 # Use the official Playwright Python image which comes pre-configured with all system dependencies
-FROM mcr.microsoft.com/playwright/python:v1.44.0-noble
-
+FROM mcr.microsoft.com/playwright/python:v1.44.0-jammy
 WORKDIR /code
 
 # Copy and install Python requirements
