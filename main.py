@@ -1,7 +1,31 @@
 from fastapi import FastAPI, Response
 from fastapi.responses import FileResponse
-from playwright.async_api import async_playwright
-from pydantic import BaseModel 
+from playwright.async_api import Request, async_playwright
+from pydantic import BaseModel
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.orm import declarative_base, sessionmaker
+from fastapi.responses import JSONResponse
+import httpx
+
+
+engine = create_engine(
+    "sqlite:///./test.db",
+    connect_args={"check_same_thread": False}
+)
+
+SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+
+Base = declarative_base()
+
+class FeedbackDB(Base):
+    __tablename__ = "feedback"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    feedback = Column(String)
+
+Base.metadata.create_all(bind=engine)
+
 
 app = FastAPI()
 
@@ -58,10 +82,25 @@ api_keys = [
     "SCAPIRbv0P9zayWwqR4rN",
 ]
 
+@app.exception_handler(Exception)
+async def global_error(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"error": "Internal Server Error", "detail": str(exc)}
+    )
+
 class Feedback(BaseModel):
     feedback: str
     name: str
+@app.get("/website-info/{domain}")
+async def website_info(domain: str):
 
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            f"https://dns.google/resolve?name={domain}"
+        )
+
+    return response.json()
 @app.get("/favicon.ico")
 async def favicon():
     return Response(status_code=204)
@@ -99,7 +138,26 @@ async def screenshot(api_key: str, my_path: str):
         return {"How to use": "How to use: To run a GET, simply type '/example.com' (replace example.com with the website you want to screenshot! To screenshot a full page (top to bottom), simply add ', fullpage' to the end of the GET. For example, '/example.com, fullpage'. Other GET requests include: /about"}
 @app.post("/feedback/", status_code=201)
 def get_feedback(user: Feedback):
+
+    db = SessionLocal()
+    item = FeedbackDB(
+        name=user.name,
+        feedback=user.feedback
+    )
+    db.add(item)
+    db.commit()
     return {
         "message": "Feedback submitted successfully",
         "user_data": user.model_dump() 
     }
+@app.get("/feedback")
+def list_feedback(page: int = 1, size: int = 10):
+    db = SessionLocal()
+    offset = (page - 1) * size
+    results = (
+    db.query(FeedbackDB)
+    .offset(offset)
+    .limit(size)
+    .all()
+    )
+    return results
