@@ -10,4 +10,4 @@ RUN playwright install --with-deps
 # Copy the rest of your application code
 COPY . .
 
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port $PORT"]
+CMD ["sh", "-c", "python -m uvicorn main:app --host 0.0.0.0 --port $PORT"]
