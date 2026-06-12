@@ -161,3 +161,6 @@ def list_feedback(page: int = 1, size: int = 10):
     .all()
     )
     return results
+@app.get("/status")
+def status():
+    return {"status": "ok"}
