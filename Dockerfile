@@ -5,11 +5,11 @@ WORKDIR /code
 # Copy requirements file
 COPY ./requirements.txt /code/requirements.txt
 
-# Force python3 to explicitly run pip so dependencies land in its exact environment path
-RUN python3 -m pip install --no-cache-dir --upgrade -r /code/requirements.txt
+# Install packages using the default python command mapped by the Playwright image
+RUN python -m pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
 # Copy the rest of your application code
 COPY . .
 
-# Run uvicorn as a module from the exact same python3 executable
-CMD ["sh", "-c", "python3 -m uvicorn main:app --host 0.0.0.0 --port $PORT"]
+# Run uvicorn using the identical 'python' command to match the installation environment
+CMD ["sh", "-c", "python -m uvicorn main:app --host 0.0.0.0 --port $PORT"]
